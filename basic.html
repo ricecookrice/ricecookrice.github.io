@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Game - Basic Level</title>
+    <style>
+        /* 页面整体布局和背景 */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        /* 开始按钮样式：尺寸、颜色、阴影、过渡效果、周期性发光 */
+        #startButton {
+            padding: 25px 50px;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(to right, #5594cf, #e75b5b);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        /* 开始按钮悬停效果：增强阴影和浮起动画 */
+        #startButton:hover {
+            box-shadow: 0 0 40px rgba(255, 255, 255, 1), 0 6px 12px rgba(0,0,0,0.5);
+            transform: translateY(-10px);
+        }
+        /* 信息区域样式：位置、颜色、阴影 */
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: gray;
+            font-size: 14px;
+            text-shadow: 0 0 5px white;
+        }
+        /* 等级选择器容器样式 */
+        #levelSelect {
+            margin-top: 10px;
+            color: gray;
+            font-size: 14px;
+        }
+        /* 选择框样式：透明背景、无边框、增强泛光效果、周期性发光动画、过渡 */
+        #levelSelect select {
+            background: transparent;
+            border: none;
+            color: rgb(124, 124, 124);
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(50, 50, 50, 0.5), 0 0 10px #5594cf;
+            transition: all 0.3s ease;
+        }
+        /* 选择框悬停效果：浮起和增强泛光 */
+        #levelSelect select:hover {
+            transform: translateY(-5px);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+<body>
+    <button id="startButton">Start Game</button>
+    <div id="info">
+        Version 1.0<br>
+        Author: Your Name<br>
+        <div id="levelSelect">
+            Effect Level: <select id="level">
+                <option value="basic">Basic</option>
+                <option value="advanced">Advanced</option>
+                <option value="godlike">Godlike</option>
+            </select>
+        </div>
+    </div>
+    <script>
+        // 获取DOM元素
+        const startButton = document.getElementById('startButton');
+        const levelSelect = document.getElementById('level');
+
+        // 点击开始按钮放大效果：临时放大按钮
+        startButton.addEventListener('click', function() {
+            this.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+
+        // 鼠标离开开始按钮时重置浮起效果：清除悬停时的transform
+        startButton.addEventListener('mouseout', function() {
+            this.style.transform = 'translateY(0)';
+        });
+
+        // 点击选项放大效果：临时放大选择框
+        levelSelect.addEventListener('click', function() {
+            this.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+
+        // 鼠标离开选项时重置：清除悬停时的transform
+        levelSelect.addEventListener('mouseout', function() {
+            this.style.transform = 'translateY(0)';
+        });
+
+        // 等级选择变化事件：跳转到相应页面
+        levelSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            if (selectedValue === 'basic') {
+                // 已经是basic页面，无需跳转
+                return;
+            } else if (selectedValue === 'advanced') {
+                window.location.href = 'advanced.html';
+            } else if (selectedValue === 'godlike') {
+                window.location.href = 'godlike.html';
+            }
+        });
+    </script>
+</body>
+</html>

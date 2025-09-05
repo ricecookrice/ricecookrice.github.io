@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开始游戏界面 - 高级特效</title>
+    <style>
+        /* 页面整体布局和背景 */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(45deg, #000000, #1a1a1a, #333333);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            animation: backgroundShift 10s infinite ease-in-out;
+        }
+        @keyframes backgroundShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 背景canvas */
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* 开始按钮样式：尺寸、颜色、阴影、过渡效果、周期性发光、旋转 */
+        #startButton {
+            padding: 30px 60px;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #5594cf, #e75b5b, #ff6b6b);
+            background-size: 200% 200%;
+            animation: gradientShift 3s infinite ease-in-out, buttonGlow 2s infinite ease-in-out;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes buttonGlow {
+            0% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 4px 8px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.9), 0 4px 8px rgba(0,0,0,0.3), 0 0 20px #5594cf; }
+            100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 4px 8px rgba(0,0,0,0.3); }
+        }
+
+        /* 开始按钮悬停效果：增强阴影、浮起、旋转 */
+        #startButton:hover {
+            box-shadow: 0 0 50px rgba(255, 255, 255, 1), 0 8px 16px rgba(0,0,0,0.5);
+            transform: translateY(-15px) scale(1.05);
+            animation: spin 4s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: translateY(-15px) scale(1.05) rotate(0deg); }
+            100% { transform: translateY(-15px) scale(1.05) rotate(360deg); }
+        }
+
+        /* 信息区域样式：位置、颜色、阴影、浮夸效果 */
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ffffff;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            animation: rainbowText 3s infinite ease-in-out;
+        }
+        @keyframes rainbowText {
+            0%, 100% { color: #ffffff; }
+            25% { color: #5594cf; }
+            50% { color: #e75b5b; }
+            75% { color: #ff6b6b; }
+        }
+
+        /* 等级选择器容器样式 */
+        #levelSelect {
+            margin-top: 15px;
+            color: #ffffff;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            animation: rainbowText 3s infinite ease-in-out;
+        }
+
+        /* 选择框样式：透明背景、无边框、增强泛光效果、周期性发光动画、过渡 */
+        #levelSelect select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            font-size: 16px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            animation: glowPulse 2s infinite ease-in-out;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        @keyframes glowPulse {
+            0% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+            50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); }
+            100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+        }
+
+        /* 选择框悬停效果：浮起和增强泛光 */
+        #levelSelect select:hover {
+            transform: translateY(-5px);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 1);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 粒子效果：按不同方向发射 */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.7;
+            animation: particle-shoot 10s ease-out forwards;
+        }
+        @keyframes particle-shoot {
+            0% {
+            transform: scale(1) translate(0, 0);
+            opacity: 0.7;
+            }
+            100% {
+            /* 随机方向发射，由JS设置CSS变量 */
+            transform: scale(0.5) translate(var(--dx, 100px), var(--dy, -100px));
+            opacity: 0;
+            }
+        }
+        @keyframes float {
+            0% { opacity: 0.7; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(0) translateY(-100px); }
+        }
+
+        /* 流光效果 */
+        .flowing-light {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1000%;
+            height: 1000%;
+            background: linear-gradient(0deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: flow 10s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        @keyframes flow {
+            0% { transform: translateX(-100%) translateY(-100%); }
+            100% { transform: translateX(100%) translateY(100%); }
+        }
+
+        /* 烟花效果 */
+        .firework {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #ff0000, #ffff00);
+            border-radius: 50%;
+            animation: firework 1.5s ease-out forwards;
+        }
+        @keyframes firework {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(15); opacity: 0; }
+        }
+
+        /* 泡泡效果：无限循环动画 */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.8), rgba(0,0,0,0.2));
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            animation: bubble infinite ease-in-out; /* 无限循环 */
+            pointer-events: none;
+        }
+        @keyframes bubble {
+            0% { transform: scale(0) translate(0, 0); opacity: 1; }
+            50% { transform: scale(1.2) translate(var(--dx, 100px), var(--dy, -100px)); opacity: 0.8; }
+            100% { transform: scale(0) translate(var(--dx, 100px), var(--dy, -100px)); opacity: 0; }
+        }
+
+        /* 波纹效果：调整动画以适应放大后的波纹 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: ripple 1s linear; /* 延长动画时间 */
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to { transform: scale(8); opacity: 0; } /* 增加scale以适应更大波纹 */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="background"></canvas>
+    <button id="startButton">开始游戏</button>
+    <div id="info">
+        <div>版号: 0.0.2</div>
+        <div>作者: GitHub Copilot</div>
+        <div id="levelSelect">
+            <label for="level">特效等级:</label>
+            <select id="level">
+                <option value="basic">初级</option>
+                <option value="advanced">高级</option>
+                <option value="god">神人级</option>
+            </select>
+        </div>
+    </div>
+    <script>
+        // 获取DOM元素
+        const startButton = document.getElementById('startButton');
+        const levelSelect = document.getElementById('level');
+        const backgroundCanvas = document.getElementById('background');
+        const ctx = backgroundCanvas.getContext('2d');
+
+        // 设置canvas大小
+        function resizeCanvas() {
+            backgroundCanvas.width = window.innerWidth;
+            backgroundCanvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 随机颜色生成
+        function randomColor() {
+            return `rgb(${Math.random()*255}, ${Math.random()*255}, ${Math.random()*255})`;
+        }
+
+        // 初始化高级特效
+        function initAdvancedEffects() {
+            // 动态背景：放大并规律移动
+            function updateBackground() {
+                // 放大背景：使用更大的rect
+                const scale = 1.2; // 放大1.2倍
+                const offsetX = Math.sin(Date.now() * 0.001) * 50; // 左右移动
+                const offsetY = Math.cos(Date.now() * 0.001) * 50; // 上下移动
+
+                ctx.save();
+                ctx.translate(offsetX, offsetY);
+                ctx.scale(scale, scale);
+                ctx.fillStyle = `linear-gradient(45deg, ${randomColor()}, ${randomColor()})`;
+                ctx.fillRect(-backgroundCanvas.width * 0.1, -backgroundCanvas.height * 0.1, backgroundCanvas.width * 1.2, backgroundCanvas.height * 1.2);
+                ctx.restore();
+
+                requestAnimationFrame(updateBackground);
+            }
+            updateBackground();
+
+            // 添加粒子：无限生成，每0.05秒生成一个
+            setInterval(() => {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.width = Math.random() * 15 + 5 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = randomColor();
+
+                // 随机方向发射
+                const angle = Math.random() * 2 * Math.PI; // 随机角度
+                const distance = Math.random() * 200 + 100; // 随机距离
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                particle.style.setProperty('--dx', dx + 'px');
+                particle.style.setProperty('--dy', dy + 'px');
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 3000); // 仍然移除以避免过多
+            }, 50); // 每50ms生成一个
+
+            // 添加流光
+            const light = document.createElement('div');
+            light.className = 'flowing-light';
+            document.body.appendChild(light);
+        }
+
+        // 波纹特效：放大波纹，调整大小和位置
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement('span');
+            // 放大波纹直径：原来是button尺寸，现在放大1.5倍
+            const diameter = Math.max(button.clientWidth, button.clientHeight) * 1.5;
+            const radius = diameter / 2;
+
+            // 设置波纹大小
+            circle.style.width = circle.style.height = `${diameter}px`;
+            // 调整位置：居中于点击点，但稍微偏移以适应放大
+            circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+            circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
+            circle.classList.add('ripple');
+
+            // 移除旧波纹
+            const ripple = button.getElementsByClassName('ripple')[0];
+            if (ripple) ripple.remove();
+            button.appendChild(circle);
+            // 延长动画时间以适应更大波纹
+            setTimeout(() => circle.remove(), 1000);
+        }
+
+        // 烟花特效：持续生成烟花，显示时间延长3倍
+        function createFirework(x, y) {
+            let fireworkCount = 0;
+            const maxFireworks = 135; // 总共生成n个烟花
+            const interval = setInterval(() => {
+                if (fireworkCount >= maxFireworks) {
+                    clearInterval(interval);
+                    return;
+                }
+                for (let i = 0; i < 15; i++) { // 每次生成5个
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    firework.style.left = x + Math.random() * 1000 - 500 + 'px';
+                    firework.style.top = y + Math.random() * 1000 - 500 + 'px';
+                    firework.style.background = randomColor();
+                    document.body.appendChild(firework);
+                    // 显示时间延长3倍：原来1500ms，现在4500ms
+                    setTimeout(() => firework.remove(), 4500);
+                    fireworkCount++;
+                }
+            }, 200); // 每200ms生成一批
+        }
+
+        // 抛物线泡泡特效：无限生成泡泡，使用随机方向发射，每0.1秒生成一个
+        function createBubbles(x, y) {
+            // 无限生成泡泡，每100ms生成一个
+            setInterval(() => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.left = x + 'px';
+                bubble.style.top = y + 'px';
+                bubble.style.width = Math.random() * 40 + 20 + 'px';
+                bubble.style.height = bubble.style.width;
+                bubble.style.background = `linear-gradient(45deg, ${randomColor()}, ${randomColor()})`;
+                bubble.style.animationDuration = Math.random() * 3 + 3 + 's';
+
+                // 随机方向发射
+                const angle = Math.random() * 2 * Math.PI; // 随机角度
+                const distance = Math.random() * 300 + 100; // 随机距离
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                bubble.style.setProperty('--dx', dx + 'px');
+                bubble.style.setProperty('--dy', dy + 'px');
+
+                document.body.appendChild(bubble);
+                // 无限效果：不移除，让动画无限
+            }, 500); // 每500ms生成一个
+        }
+
+        // 按钮点击事件
+        startButton.addEventListener('click', function(event) {
+            const rect = this.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            // 波纹
+            createRipple(event);
+            // 烟花
+            createFirework(x, y);
+            // 泡泡
+            createBubbles(x, y);
+
+            // 临时放大
+            this.style.transform = 'scale(1.1)';
+            setTimeout(() => this.style.transform = 'scale(1)', 300);
+        });
+
+        // 鼠标离开按钮重置
+        startButton.addEventListener('mouseout', function() {
+            this.style.transform = 'translateY(0)';
+        });
+
+        // 等级选择变化
+        levelSelect.addEventListener('change', function() {
+            if (this.value === 'god') {
+                window.location.href = 'god.html';
+            } else if (this.value === 'advanced') {
+                window.location.href = 'advanced.html';
+            } else if (this.value === 'basic') {
+                window.location.href = 'basic.html';
+            }
+        });
+
+        // 初始化
+        initAdvancedEffects();
+    </script>
+</body>
+</html>
