@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>网页标题</title>
+    <script type="module">
+        console.log('开始加载游戏模块...');
+        import gameValues from './values.js';
+        import GameCore from './gamecore.js';
+        import ResetSystem from './reset_system.js';
+        import PageSwitch from './pageSwitch.js';
+        import BuySystem from './buy.js';
+        
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，初始化游戏...');
+            // index的主流程：将所有模块挂载到window对象供全局访问
+            window.gameValues = gameValues;  // 数值存储系统
+            window.GameCore = GameCore;      // 游戏核心计算系统
+            window.ResetSystem = ResetSystem; // 重置系统
+            window.PageSwitch = PageSwitch;   // 页面切换系统
+            window.BuySystem = BuySystem;     // 购买系统
+            
+            // index的主流程：按顺序初始化各个系统
+            GameCore.init();      // 初始化游戏核心（启动主循环）
+            PageSwitch.init();    // 初始化页面切换
+            // BuySystem.init(); // 移除重复调用，避免事件监听器重复添加
+            console.log('游戏初始化完成！');
+            
+        });
+    </script>
+    <style>
+        /* 基础样式 */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .square-button {
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+            display: inline-block;
+            vertical-align: top;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .upgrade-square-button {
+            width: 150px;
+            height: 150px;
+            margin: 5px;
+            display: inline-block;
+            vertical-align: top;
+            overflow: hidden;
+            box-sizing: border-box;
+            /* 浏览器默认按钮样式 */
+        }
+        .upgrade-square-button.available {
+            opacity: 1;
+        }
+        .upgrade-square-button.purchased {
+            opacity: 1;
+            background-color: #ffffff;
+        }
+        .trigger-button.unavailable {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .main-content {
+            min-height: calc(100vh - 200px);
+            padding: 20px;
+        }
+        .achievement-button {
+            width: 150px;
+            height: 150px;
+            margin: 8px;
+            display: inline-block;
+            vertical-align: top;
+            overflow: hidden;
+            box-sizing: border-box;
+            border-radius: 8px;
+            color: rgb(0, 0, 0);
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .achievement-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        .achievement-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .achievement-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .sub-bar-2.active, .sub-bar-3.active {
+            display: flex !important;
+            justify-content: center;
+        }
+        /* 页面默认样式 */
+        .page-1-1, .page-1-2, .page-1-3, .page-2-1, .page-2-2, .page-3-1 {
+            display: none;
+        }
+        
+        /* 活动页面样式 */
+        .page-1-1.active {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        .page-1-2.active, 
+        .page-1-3.active, 
+        .page-2-1.active,
+        .page-2-2.active,
+        .page-3-1.active {
+            display: block;
+            width: 100%;
+        }
+
+        /* 成就弹窗样式 */
+        .achievement-popup {
+            background: #aaddab;
+            color: rgb(0, 0, 0);
+            padding: 15px 40px;
+            min-width: 300px;
+            max-width: 400px;
+            animation: slideInRight 0.5s ease-out, fadeOut 0.5s ease-in 3s forwards;
+            pointer-events: auto;
+        }
+
+        .achievement-popup .title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .achievement-popup .description {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 成就弹窗容器 -->
+    <div id="achievement-popup-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; pointer-events: none;"></div>
+
+    <!-- 顶栏 -->
+    <div class="header" style="width: 100%; max-height: 300px; overflow: hidden;">
+        <!-- 左边区域 -->
+        <div class="left-section" style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box;">
+            <div class="news-box" style="text-align: center; height: 100%;">
+                <div id="newsBox" style="height: 100%; max-height: 180px; overflow-y: auto; padding: 8px 0;
+                background:#fff;border-radius:8px;border:1px solid #eee;box-shadow:0 2px 8px #eee;min-height:60px;text-align:left;font-size:14px;line-height:1.6;">
+                    <!-- 新闻内容自动填充 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间区域 -->
+        <div id="top" style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box; padding: 10px 0;">
+            <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceA">0</span>个a</h1>
+            <!-- 调试e值显示区 -->
+            <div style="text-align:center;color:#888; margin: 3px 0;">调试e值：<span id="debugEValue"></span></div>         
+            <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceB">0</span>个b</h1>
+            <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceC">0</span>个c</h1>
+            <!-- 调试f值显示区 -->
+            <div style="text-align:center;color:#888; ">调试f值：<span id="debugFValue"></span></div>
+            <!-- GameCore测试计数器显示区 -->
+            <div style="text-align:center;color:#888;">A资源收入：<span id="debugTestValue">0 a/s</span></div>
+            <!-- BuySystem测试计数器显示区 -->
+            <div style="text-align:center;color:#888;">Buy测试值：<span id="debugHValue">0</span></div>
+        </div>
+
+        <!-- 右边区域 -->
+        <div style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box; padding: 10px 0;">
+            <div style="margin-bottom: 8px;">Reset Debug: <pre id="resetDebugValue" style="margin: 0; font-size: 12px; max-height: 80px; overflow-y: auto;">待初始化...</pre></div>
+            <div style="margin-bottom: 8px; text-align: center; color: #888; font-size: 12px;">
+                <div>总游玩时间: <span id="totalPlayTime">0.0s</span></div>
+                <div>重置1中时间: <span id="reset1PlayTime">0.0s</span></div>
+                <div>重置2中时间: <span id="reset2PlayTime">0.0s</span></div>
+                <button onclick="window.GameCore.statistics.testTimeDisplay()" style="margin-top: 5px; font-size: 10px; padding: 2px 5px;">测试时间显示</button>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="handleReset1()" class="square-button" style="width: 160px; height: 160px; margin: 2px;">重置1</button>
+                <button onclick="window.ResetSystem.performReset(2)" class="square-button" style="width: 160px; height: 160px; margin: 2px;">重置2</button>
+                <button onclick="window.ResetSystem.performReset(3)" class="square-button" style="width: 160px; height: 160px; margin: 2px;">重置3</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" style="display: flex; flex-direction: column;">
+        <!-- 增长页 (1,1) -->
+        <div class="page-1-1" style="display: flex; width: 100%;">
+            <!-- 左区：60%宽度，内部垂直排列 -->
+            <div class="left-area" style="width: 60%; display: flex; flex-direction: column; gap: 8px;">
+                <!-- 块1 -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 80px;">波动I</div>
+                    <div style="flex:1;">拥有<span id="trigger-0-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-0">0</span>a/s</div>
+                    <button class="trigger-button" data-index="0" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-0-price">1</span>a</button>
+                </div>
+                <!-- 块2-8 -->
+                <div style="display: flex; align-items: center; gap: 8px; background: #f0f0f0;">
+                    <div style="width: 80px;">波动II</div>
+                    <div style="flex:1;">拥有<span id="trigger-1-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-1">0</span>a/s</div>
+                    <button class="trigger-button" data-index="1" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-1-price">2</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 80px;">波动III</div>
+                    <div style="flex:1;">拥有<span id="trigger-2-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-2">0</span>a/s</div>
+                    <button class="trigger-button" data-index="2" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-2-price">5</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; background: #f0f0f0;">
+                    <div style="width: 80px;">波动IV</div>
+                    <div style="flex:1;">拥有<span id="trigger-3-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-3">0</span>a/s</div>
+                    <button class="trigger-button" data-index="3" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-3-price">10</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 80px;">波动V</div>
+                    <div style="flex:1;">拥有<span id="trigger-4-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-4">0</span>a/s</div>
+                    <button class="trigger-button" data-index="4" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-4-price">20</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; background: #f0f0f0;">
+                    <div style="width: 80px;">波动VI</div>
+                    <div style="flex:1;">拥有<span id="trigger-5-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-5">0</span>a/s</div>
+                    <button class="trigger-button" data-index="5" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-5-price">40</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 80px;">波动VII</div>
+                    <div style="flex:1;">拥有<span id="trigger-6-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-6">0</span>a/s</div>
+                    <button class="trigger-button" data-index="6" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-6-price">80</span>a</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; background: #f0f0f0;">
+                    <div style="width: 80px;">波动VIII</div>
+                    <div style="flex:1;">拥有<span id="trigger-7-count">0</span>个 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; +<span id="trigger-income-7">0</span>a/s</div>
+                    <button class="trigger-button" data-index="7" style="width: 120px; height: 40px; margin: 0 0 0 8px;">花费<span id="trigger-7-price">160</span>a</button>
+                </div>
+                <div style="color: gray; text-align: center; margin-top: 8px;">每个波动按一定比例加成下层波动</div> 
+            </div>
+            <!-- 右区：40%宽度，垂直按钮排列 -->
+            <div class="right-half" style="width: 40%; text-align: middle; display: flex; flex-direction: column; align-items: center; gap: 50px;">
+                <button id="reset-upgrade-0" class="reset-upgrade-button" style="width: 250px; height: 120px;">
+                共振增强（<span id="reset-upgrade-0-count">0</span>）<br>
+                重置一次<br>
+                每层波动对加成下层波动的加成+0.1<br>
+                花费<span id="reset-upgrade-0-price">800</span>a
+                </button>
+                <button id="reset-upgrade-1" class="reset-upgrade-button" style="width: 250px; height: 120px;">
+                堆叠（<span id="reset-upgrade-1-count">0</span>/7）<br>
+                重置一次<br>
+                波动层数加成该层波动，每次效果加一层<br>
+                花费<span id="reset-upgrade-1-price">2000</span>a
+                </button>
+                <button id="reset-upgrade-2" class="reset-upgrade-button" style="width: 250px; height: 120px;">
+                精简化（<span id="reset-upgrade-2-count">0</span>/5）<br>
+                重置一次<br>
+                除了波动1的所有波动价格倍增减弱5%<br>
+                花费<span id="reset-upgrade-2-price">5000</span>a
+                </button>
+            </div>
+        </div>
+
+        <!-- 升级区 (1,2) -->
+        <div class="page-1-2" style="text-align: center;">
+            <div class="button-grid">
+                <!-- 第一行按钮 -->
+                <div class="button-row" style="margin: 10px 0;">
+                    <!-- 这里统一高度确保对齐 -->
+                    <button class="upgrade-square-button" id="upgrade1-1">
+                            升级1-1<br>
+                            a收入翻倍<br>
+                            花费100a
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-2">
+                            升级1-2<br>
+                            波动1对其它波动的增益+0.05<br>
+                            花费1000a
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-3">
+                            升级1-3<br>
+                            每次重置以100a开始<br>
+                            花费15.00ka
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-4">
+                            升级1-4<br>
+                            每次重置你以一个波动4开始<br>
+                            花费200.00ka
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-5">
+                            升级1-5<br>
+                            a基于游玩时间获得加成<br>
+                            当前倍数：<span id="multiplier2Display">1.00</span><br>
+                            花费1000.00ka
+                    </button>
+                </div>
+                <!-- 第二行按钮 -->
+                <div class="button-row" style="margin: 10px 0;">
+                    <button class="upgrade-square-button" id="upgrade1-6">
+                            升级1-6<br>
+                            波动I价格倍增减弱20%<br>
+                            花费2.30Ma
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-7">
+                            升级1-7<br>
+                            波动I对其它波动的增益+0.5<br>
+                            花费10.00Ma
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-8">
+                            升级1-8<br>
+                            a收入基于重置次数获得加成<br>
+                            当前：<span id="upgrade1-8-multiplier">1.00</span><br>
+                            花费200.00Ma
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-9">
+                            升级1-9<br>
+                            不再重置波动1<br>
+                            花费500.00Ma
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade1-10">
+                            升级1-10<br>
+                            解锁重置2，将会重置页面（1，1）与（1，2）你可以获得b<br>
+                            花费1.00Ba
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 升级区 (1,3) -->
+        <div class="page-1-3" style="text-align: center;">
+            <div class="button-grid">
+                <!-- 第一行按钮 -->
+                <div class="button-row" style="margin: 10px 0;">
+                    <!-- 这里统一高度确保对齐 -->
+                    <button class="upgrade-square-button" id="upgrade2-1">
+                            升级2-1<br>
+                            基础增强：所有波动基础收入*10<br>
+                            花费1b
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade2-2">
+                            升级2-2<br>
+                            熟手：b收入基于重置1次数获得加成<br>
+                            当前：*1.00<br>
+                            花费2b
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade2-3">
+                            升级2-3<br>
+                            解锁b提取器，基于波动和a的数量获取b<br>
+                            因为没有做解锁功能，建议你不要购买<br>
+                            除非你有强迫症，花费5b
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade2-4">
+                            升级2-4<br>
+                            挑战：解锁挑战功能<br>
+                            当前：还没做<br>
+                            花费10b
+                    </button>
+                    <button class="upgrade-square-button" id="upgrade2-5">
+                            升级2-5<br>
+                            巨大代价：波动1加成改为乘法，但价格倍增增加<br>
+                            花费100b
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页面3 (2,1) -->
+        <div class="page-2-1" style="display: none;">
+            <!-- 上部分 -->
+            <div class="top-section" style="position: relative;">
+                <div style="display: flex; justify-content: center; align-items: flex-end; width: 100%; height: 120px; position: relative;">
+                    <button class="large-button" style="width: 200px; height: 100px; margin: 10px; margin-bottom: 0;">大按钮</button>
+                    <button class="small-button" style="width: 150px; height: 75px; margin-left: 450px; margin-bottom: 0;">b获取量*1.1</button>
+                </div>
+            </div>
+
+            <!-- 中间部分 -->
+            <div class="middle-section" style="margin: 20px 0; text-align: center;">
+                <div class="description">b提取器</div>
+                <div class="description">每过一段时间进行判定，判定成功后获得b</div>
+                <div class="progress-text">当前概率: 0%</div>
+                <div class="progress-bar" style="width: 80%; height: 20px; background: #eee; margin: 10px auto;">
+                    <div style="width: 0%; height: 100%; background: #4CAF50;"></div>
+                </div>
+                <div class="description">b提取器pro max</div>
+                <div class="description">从海量a中大批量提取b，需要消耗c，但是没做解锁功能，就先显示在这里了</div>
+                <div class="progress-text">当前比例: 0%</div>
+                <div class="progress-bar" style="width: 80%; height: 20px; background: #eee; margin: 10px auto;">
+                    <div style="width: 0%; height: 100%; background: #4CAF50;"></div>
+                </div>
+                <div class="description">c合成器</div>
+                <div class="description">消耗b合成c，但是没做解锁功能，就先显示在这里了</div>
+                <div class="progress-text">当前进度: 0%</div>
+                <div class="progress-bar" style="width: 80%; height: 20px; background: #eee; margin: 10px auto;">
+                    <div style="width: 0%; height: 100%; background: #4CAF50;"></div>
+                </div>
+            </div>
+
+            <!-- 下部分 -->
+            <div class="bottom-section" style="text-align: center;">
+                <div class="button-row" style="margin: 10px 0;">
+                    <button class="square-button">概率增加（1/10）</button>
+                    <button class="square-button">判定时间加快（1/10）</button>
+                    <button class="square-button">基于a数量增加概率（1/5）</button>
+                    <button class="square-button">基于波动数量增加概率（1/8）</button>
+                    <button class="square-button">解锁切换功能</button>
+                </div>
+                <div class="button-row" style="margin: 10px 0;">
+                    <button class="square-button">按钮6</button>
+                    <button class="square-button">按钮7</button>
+                    <button class="square-button">按钮8</button>
+                    <button class="square-button">按钮9</button>
+                    <button class="square-button">按钮10</button>
+                </div>
+            </div>
+        </div>
+        <!-- 页面4 (2,2) -->
+        <div class="page-2-2">
+        </div>
+
+        <!-- 成就区 (3,1) -->
+        <div class="page-3-1">
+            <div class="button-grid">
+                <!-- 第一行成就 -->
+                <div class="achievement-row">
+                    <button id="achievement-1-1" class="achievement-button">
+                            <strong style="font-size: 1.2em;">从零开始！</strong><br>
+                            购买一个波动1<br>
+                    </button>
+                    <button id="achievement-1-2" class="achievement-button">
+                            <strong style="font-size: 1.2em;">这是...100%</strong><br>
+                            获得100个a<br>
+                    </button>
+                    <button id="achievement-1-3" class="achievement-button">
+                            <strong style="font-size: 1.2em;">卷土重来</strong><br>
+                            进行一次重置<br>
+                    </button>
+                    <button id="achievement-1-4" class="achievement-button">
+                            <strong style="font-size: 1.2em;">改造升级</strong><br>
+                            购买一个升级<br>
+                    </button>
+                    <button id="achievement-1-5" class="achievement-button">
+                            <strong style="font-size: 1.2em;">双缝干涉</strong><br>
+                            购买一个波动2<br>
+                    </button>
+                    <button id="achievement-1-6" class="achievement-button">
+                            <strong style="font-size: 1.2em;">三，三缝干涉</strong><br>
+                            购买一个波动3<br>
+                    </button>
+                    <button id="achievement-1-7" class="achievement-button">
+                            <strong style="font-size: 1.2em;">我不知道怎么取名了</strong><br>
+                            购买一个波动4<br>
+                    </button>  
+                    <button id="achievement-1-8" class="achievement-button">
+                            <strong style="font-size: 1.2em;">十全十美</strong><br>
+                            购买页面（1，2）的全部升级<br>
+                    </button>
+                </div>
+                <!-- 第二行成就 -->
+                <div class="achievement-row">
+                    <button id="achievement-2-1" class="achievement-button">
+                            <strong style="font-size: 1.2em;">十五全...十五美</strong><br>
+                            购买页面（1，3）的5个升级<br>
+                    </button>
+                    <button id="achievement-2-2" class="achievement-button">
+                            <strong style="font-size: 1.2em;">花儿都谢了</strong><br>
+                            购买一个波动8<br>
+                    </button>
+                    <button id="achievement-2-3" class="achievement-button"></button>
+                    <button id="achievement-2-4" class="achievement-button">
+                            <strong style="font-size: 1.2em;">彩蛋？？？</strong><br>
+                            多点几下<br>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 底栏区 -->
+    <div class="footer" style="position: fixed; bottom: 0; width: 100%; background: #f5f5f5;">
+        <!-- 第一行（子栏） -->
+        <div class="sub-bar" style="display: flex; justify-content: center; min-height: 50px;">
+            <!-- 第一种子栏 -->
+            <div class="sub-bar-1" style="width: 100%; text-align: center; display: flex; justify-content: center;">
+                <button style="width: 33%; margin: 5px;">子栏1按钮1</button>
+                <button style="width: 33%; margin: 5px;">子栏1按钮2</button>
+                <button style="width: 33%; margin: 5px;">子栏1按钮3</button>
+            </div>
+            <!-- 第二种子栏 -->
+            <div class="sub-bar-2" style="width: 100%; text-align: center; display: none; justify-content: center;">
+                <button style="width: 90%; margin: 5px;">子栏2按钮</button>
+            </div>
+            <!-- 第三种子栏 -->
+            <div class="sub-bar-3" style="width: 100%; text-align: center; display: none; justify-content: center;">
+                <button style="width: 90%; margin: 5px;">子栏3按钮</button>
+            </div>
+        </div>
+        <!-- 第二行（母栏） -->
+        <div class="main-bar" style="display: flex; justify-content: center; padding: 5px 0;">
+            <button style="width: 30%; margin: 0 5px; transition: background-color 0.3s;">母栏按钮1</button>
+            <button style="width: 30%; margin: 0 5px; transition: background-color 0.3s;">母栏按钮2</button>
+            <button style="width: 30%; margin: 0 5px; transition: background-color 0.3s;">母栏按钮3</button>
+        </div>
+    </div>
+
+    <!-- JavaScript 引用 -->
+    <script type="module">
+        import gameValues from './values.js';
+        import GameCore from './gamecore.js';
+        import newsSystem from './newsSystem.js';
+        import BuySystem from './buy.js';
+        import pageSwitch from './pageSwitch.js';
+        import AchievementSystem from './chenjiu.js';
+            
+        // 初始化逻辑（只调用一次）
+        async function initAllSystems() {
+            console.log('DOM加载完成，初始化所有系统...');
+            try {
+                // 初始化游戏核心组件
+                window.gameValues = gameValues;
+                window.GameCore = GameCore;
+                window.BuySystem = BuySystem;
+                window.AchievementSystem = AchievementSystem;
+                
+                // 按顺序初始化各个系统
+                await GameCore.init();
+                await newsSystem.init();
+                await BuySystem.init();
+                await pageSwitch.init();  // 确保页面切换系统正确初始化
+                await AchievementSystem.init();  // 初始化成就系统
+                
+                // 启动f值更新器
+                let fValue = 0;
+                setInterval(function() {
+                    fValue += 5;
+                    const debugF = document.getElementById('debugFValue');
+                    if (debugF) debugF.textContent = fValue;
+                }, 100);
+
+                // 启动收入显示循环
+                startIncomeDisplayLoop();
+                
+                console.log('所有系统初始化完成！');
+            } catch (error) {
+                console.error('系统初始化过程中出现错误:', error);
+            }
+        }
+
+        // 刷新逻辑（持续循环）
+        function startIncomeDisplayLoop() {
+            setInterval(function refreshIncomeDisplay() {
+                if (window.GameCore?.pageManagers?.page_1_1) {
+                    const incomes = window.GameCore.pageManagers.page_1_1.getAllTriggerIncome();
+                    for (let i = 0; i < incomes.length; i++) {
+                        const el = document.getElementById(`trigger-income-${i}`);
+                        if (el) el.textContent = incomes[i].toFixed(2);
+                    }
+                }
+                // 兼容原有自动显示逻辑
+                if (typeof window.updateDisplay === 'function') {
+                    window.updateDisplay();
+                }
+            }, 1000/60); // 60fps刷新
+        }
+
+        // 重置1按钮的事件处理函数
+        window.handleReset1 = function() {
+            // 显示确认对话框
+            const confirmed = confirm('确定要执行重置1吗？这将重置所有资源和升级到初始状态！');
+            
+            if (confirmed) {
+                try {
+                    console.log('用户确认执行重置1');
+                    const result = window.ResetSystem.performReset1();
+                    
+                    if (result) {
+                        alert('重置1执行成功！');
+                        console.log('重置1执行成功');
+                    } else {
+                        alert('重置1执行失败，请查看控制台日志');
+                        console.error('重置1执行失败');
+                    }
+                } catch (error) {
+                    console.error('重置1过程中发生错误:', error);
+                    alert('重置1过程中发生错误，请查看控制台');
+                }
+            } else {
+                console.log('用户取消了重置1操作');
+            }
+        };
+
+        // 统一的初始化入口
+        window.addEventListener('DOMContentLoaded', () => {
+            initAllSystems();
+        });
+
+        // 测试时间倍数计算公式
+        window.testTimeFormula = function(seconds) {
+            if (window.GameCore && window.GameCore.statistics) {
+                return window.GameCore.statistics.testTimeMultiplierFormula(seconds);
+            }
+            console.log('GameCore未初始化');
+            return null;
+        };
+
+        // 显示时间倍数测试结果
+        window.showTimeFormulaTests = function() {
+            console.log('=== 时间倍数计算公式测试 ===');
+            const testTimes = [1, 10, 60, 300, 600, 1800, 3600, 7200, 14400, 28800]; // 秒
+            testTimes.forEach(time => {
+                window.testTimeFormula(time);
+            });
+        };
+    </script>
+</body>
+</html>
