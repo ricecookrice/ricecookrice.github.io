@@ -63,15 +63,15 @@ const ACHIEVEMENT_CONFIG = {
         }
     },
     'ac-1-8': {
-        name: '十全十美',
-        description: '购买页面（1，2）的全部升级',
+        name: '十全九美',
+        description: '购买页面（1，2）的9个升级',
         checkFunction: function() {
             const page1_2 = gameValues.pageUpgrades.page_1_2;
             return page1_2 && (
                 page1_2.buy1_1 === 1 && page1_2.buy1_2 === 1 && page1_2.buy1_3 === 1 &&
                 page1_2.buy1_4 === 1 && page1_2.buy1_5 === 1 && page1_2.buy1_6 === 1 &&
-                page1_2.buy1_7 === 1 && page1_2.buy1_8 === 1 && page1_2.buy1_9 === 1 &&
-                page1_2.buy1_10 === 1
+                page1_2.buy1_7 === 1 && page1_2.buy1_8 === 1 && page1_2.buy1_9 === 1
+               
             );
         }
     },

@@ -231,6 +231,14 @@ const GameCore = {
                 return true;
             },
 
+            // 升级1-4: 以一个波动7触发器开始
+            upgrade_1_4() {
+                // 移除重复检查，因为购买逻辑已在buyUpgrade函数中处理
+                gameValues.initialization.table1.upgrades.page_1_1.triggers[6].buycount = 1;
+                console.log('升级1-4: 重置激活');
+                return true;
+            },
+
             // 升级1-5: a基于游玩时间获得加成
             upgrade_1_5() {
                 // 移除重复检查，因为购买逻辑已在buyUpgrade函数中处理
@@ -238,13 +246,12 @@ const GameCore = {
                 if (!this._timeMultiplierUpdater) {
                     this._timeMultiplierUpdater = setInterval(() => {
                         if (gameValues.pageUpgrades.page_1_2.buy1_5 === 1) {
-                            const now = Date.now();
-                            // 获取重置1的时间记录，如果没有设置则使用当前时间
-                            const reset1Time = gameValues.reset.reset1.time_record || now;
-                            const timeSinceReset1 = Math.max(0, (now - reset1Time) / 1000); // 确保不为负数
+                            // 获取总游玩时间
+                            const totalPlayTime = GameCore.statistics.timeStats.totalPlayTime;
+                            const timeSinceStart = Math.max(0, totalPlayTime); // 确保不为负数
 
                             // 确保时间至少为1秒，避免log2(0)或负数
-                            const x = Math.max(timeSinceReset1, 1);
+                            const x = Math.max(timeSinceStart, 1);
                             const timeMultiplier = Math.pow(x, (Math.log2(x) / 40));
                             const clampedMultiplier = Math.max(1, Math.min(timeMultiplier, 1000));
 
@@ -265,15 +272,14 @@ const GameCore = {
                 }
 
                 // 初次购买时的效果
-                const now = Date.now();
-                const reset1Time = gameValues.reset.reset1.time_record || now;
-                const timeSinceReset1 = Math.max(0, (now - reset1Time) / 1000);
-                const x = Math.max(timeSinceReset1, 1);
+                const totalPlayTime = GameCore.statistics.timeStats.totalPlayTime;
+                const timeSinceStart = Math.max(0, totalPlayTime);
+                const x = Math.max(timeSinceStart, 1);
                 const timeMultiplier = Math.pow(x, (Math.log2(x) / 40));
                 const clampedMultiplier = Math.max(1, Math.min(timeMultiplier, 1000));
 
                 gameValues.resources.a_multipliers.multiplier2 = clampedMultiplier;
-                console.log(`升级1-3: 时间加成激活，游玩时间: ${timeSinceReset1.toFixed(1)}s，初始倍数: ${clampedMultiplier.toFixed(2)}`);
+                console.log(`升级1-5: 时间加成激活，游玩时间: ${timeSinceStart.toFixed(1)}s，初始倍数: ${clampedMultiplier.toFixed(2)}`);
                 return true;
             },
 

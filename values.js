@@ -196,19 +196,19 @@ const gameValues = {
                 {
                     buycount: 0,       // 购买次数：记录已购买数量，即是计数也是计算基础
                     base_cost: 800,      // 基础价格：初始购买成本
-                    costX: 10,          // 价格倍数：每次购买后价格增长系数
+                    costX: 6,          // 价格倍数：每次购买后价格增长系数
                     allbenefit: 0.1,        // 加成系数：增加所有8个触发器的加成效果
                 },
                 {
                     buycount: 0,        // 购买次数
-                    base_cost: 100,
-                    costX: 15,     // 价格倍数，不要更改
+                    base_cost: 200,
+                    costX: 12,     // 价格倍数，不要更改
                     basenumber: 1,
                 },
                 {
                     buycount: 0,        // 购买次数
-                    base_cost: 5000,
-                    costX: 20,     // 价格倍数，不要更改
+                    base_cost: 2300,
+                    costX: 18,     // 价格倍数，不要更改
                     
                 }
             ],    
@@ -230,13 +230,13 @@ const gameValues = {
             // 升级成本定义
             cost1_1: 100,    // 升级1-1: a收入翻倍
             cost1_2: 1000,    // 升级1-2: 波动1增益+0.1
-            cost1_3: 15000,   // 升级1-3: 时间加成
-            cost1_4: 200000,  // 升级1-4: 重置次数加成
-            cost1_5: 1000000,  // 升级1-5: 重置起始5a
-            cost1_6: 2300000,    // 升级1-6: 波动I价格减弱
-            cost1_7: 10000000,    // 升级1-7: 波动I增益+0.5
-            cost1_8: 200000000,    // 升级1-8: 重置起始波动4
-            cost1_9: 500000000,    // 升级1-9: 不重置波动1
+            cost1_3: 15000,   // 升级1-3: 波动1价格减弱
+            cost1_4: 50000,  // 升级1-4: 
+            cost1_5: 200000,  // 升级1-5: 
+            cost1_6: 1000000,    // 升级1-6: 
+            cost1_7: 20000000,    // 升级1-7: 
+            cost1_8: 40000000,    // 升级1-8: 
+            cost1_9: 100000000,    // 升级1-9: 不重置波动1
             cost1_10: 1e9,   // 升级1-10: 解锁重置2
 
             // 购买状态定义
@@ -433,6 +433,9 @@ function updateDisplay() {
     if (upgrade1_8_multiplier) {
         upgrade1_8_multiplier.textContent = gameValues.resources.a_multipliers.multiplier4.toFixed(2);
     }
+
+    // 更新升级按钮花费显示
+    updateUpgradeCosts();
 }
 
 /**
@@ -489,6 +492,35 @@ window.onload = function() {
 window.updateDisplay = updateDisplay;  // UI更新函数
 window.formatNumber = formatNumber;    // 数值格式化函数
 window.renderAValue = renderAValue;    // A资源渲染函数
+window.updateUpgradeCosts = updateUpgradeCosts;  // 升级花费更新函数
+
+/**
+ * 更新升级按钮花费显示
+ * 将values.js中的升级成本绑定到HTML显示
+ */
+function updateUpgradeCosts() {
+    // 更新页面1-2的升级花费
+    const page1_2 = gameValues.pageUpgrades.page_1_2;
+    for (let i = 1; i <= 10; i++) {
+        const costElement = document.getElementById(`upgrade1-${i}-price`);
+        if (costElement) {
+            const costKey = `cost1_${i}`;
+            const cost = page1_2[costKey];
+            costElement.textContent = formatNumber(cost);
+        }
+    }
+
+    // 更新页面1-3的升级花费
+    const page1_3 = gameValues.pageUpgrades.page_1_3;
+    for (let i = 1; i <= 5; i++) {
+        const costElement = document.getElementById(`upgrade2-${i}-price`);
+        if (costElement) {
+            const costKey = `cost2_${i}`;
+            const cost = page1_3[costKey];
+            costElement.textContent = formatNumber(cost);
+        }
+    }
+}
 
 // 导出游戏数值对象和相关函数
 export default gameValues;

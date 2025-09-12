@@ -285,7 +285,7 @@
                 <button id="reset-upgrade-2" class="reset-upgrade-button" style="width: 250px; height: 120px;">
                 精简化（<span id="reset-upgrade-2-count">0</span>/5）<br>
                 重置一次<br>
-                除了波动1的所有波动价格倍增减弱5%<br>
+                除了波动1的所有波动价格倍增*0.95<br>
                 花费<span id="reset-upgrade-2-price">5000</span>a
                 </button>
             </div>
@@ -300,28 +300,28 @@
                     <button class="upgrade-square-button" id="upgrade1-1">
                             升级1-1<br>
                             a收入翻倍<br>
-                            花费100a
+                            花费<span id="upgrade1-1-price">100</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-2">
                             升级1-2<br>
                             波动1对其它波动的增益+0.05<br>
-                            花费1000a
+                            花费<span id="upgrade1-2-price">1000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-3">
                             升级1-3<br>
                             每次重置以100a开始<br>
-                            花费15.00ka
+                            花费<span id="upgrade1-3-price">15000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-4">
                             升级1-4<br>
-                            每次重置你以一个波动4开始<br>
-                            花费200.00ka
+                            每次重置你以一个波动7开始<br>
+                            花费<span id="upgrade1-4-price">200000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-5">
                             升级1-5<br>
                             a基于游玩时间获得加成<br>
                             当前倍数：<span id="multiplier2Display">1.00</span><br>
-                            花费1000.00ka
+                            花费<span id="upgrade1-5-price">1000000</span>a
                     </button>
                 </div>
                 <!-- 第二行按钮 -->
@@ -329,28 +329,28 @@
                     <button class="upgrade-square-button" id="upgrade1-6">
                             升级1-6<br>
                             波动I价格倍增减弱20%<br>
-                            花费2.30Ma
+                            花费<span id="upgrade1-6-price">2300000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-7">
                             升级1-7<br>
                             波动I对其它波动的增益+0.5<br>
-                            花费10.00Ma
+                            花费<span id="upgrade1-7-price">10000000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-8">
                             升级1-8<br>
                             a收入基于重置次数获得加成<br>
                             当前：<span id="upgrade1-8-multiplier">1.00</span><br>
-                            花费200.00Ma
+                            花费<span id="upgrade1-8-price">200000000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-9">
                             升级1-9<br>
                             不再重置波动1<br>
-                            花费500.00Ma
+                            花费<span id="upgrade1-9-price">500000000</span>a
                     </button>
                     <button class="upgrade-square-button" id="upgrade1-10">
                             升级1-10<br>
                             解锁重置2，将会重置页面（1，1）与（1，2）你可以获得b<br>
-                            花费1.00Ba
+                            花费<span id="upgrade1-10-price">1000000000</span>a
                     </button>
                 </div>
             </div>
@@ -364,30 +364,30 @@
                     <button class="upgrade-square-button" id="upgrade2-1">
                             升级2-1<br>
                             基础增强：所有波动基础收入*10<br>
-                            花费1b
+                            花费<span id="upgrade2-1-price">1</span>b
                     </button>
                     <button class="upgrade-square-button" id="upgrade2-2">
                             升级2-2<br>
                             熟手：b收入基于重置1次数获得加成<br>
                             当前：*1.00<br>
-                            花费2b
+                            花费<span id="upgrade2-2-price">2</span>b
                     </button>
                     <button class="upgrade-square-button" id="upgrade2-3">
                             升级2-3<br>
                             解锁b提取器，基于波动和a的数量获取b<br>
                             因为没有做解锁功能，建议你不要购买<br>
-                            除非你有强迫症，花费5b
+                            除非你有强迫症，花费<span id="upgrade2-3-price">5</span>b
                     </button>
                     <button class="upgrade-square-button" id="upgrade2-4">
                             升级2-4<br>
                             挑战：解锁挑战功能<br>
                             当前：还没做<br>
-                            花费10b
+                            花费<span id="upgrade2-4-price">10</span>b
                     </button>
                     <button class="upgrade-square-button" id="upgrade2-5">
                             升级2-5<br>
                             巨大代价：波动1加成改为乘法，但价格倍增增加<br>
-                            花费100b
+                            花费<span id="upgrade2-5-price">100</span>b
                     </button>
                 </div>
             </div>
@@ -570,6 +570,11 @@
 
                 // 启动收入显示循环
                 startIncomeDisplayLoop();
+                
+                // 初始化升级花费显示
+                if (window.updateUpgradeCosts) {
+                    window.updateUpgradeCosts();
+                }
                 
                 console.log('所有系统初始化完成！');
             } catch (error) {
