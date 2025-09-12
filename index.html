@@ -10,6 +10,7 @@
         import ResetSystem from './reset_system.js';
         import PageSwitch from './pageSwitch.js';
         import BuySystem from './buy.js';
+        import hideSystem from './hideSystem.js';
         
         window.addEventListener('load', () => {
             console.log('页面加载完成，初始化游戏...');
@@ -23,7 +24,7 @@
             // index的主流程：按顺序初始化各个系统
             GameCore.init();      // 初始化游戏核心（启动主循环）
             PageSwitch.init();    // 初始化页面切换
-            // BuySystem.init(); // 移除重复调用，避免事件监听器重复添加
+            // 我是一个注释，awa
             console.log('游戏初始化完成！');
             
         });
@@ -174,7 +175,7 @@
     <div id="achievement-popup-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; pointer-events: none;"></div>
 
     <!-- 顶栏 -->
-    <div class="header" style="width: 100%; max-height: 300px; overflow: hidden;">
+    <div class="header" style="width: 100%; min-height: 240px; max-height: 300px; overflow: hidden;">
         <!-- 左边区域 -->
         <div class="left-section" style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box;">
             <div class="news-box" style="text-align: center; height: 100%;">
@@ -188,21 +189,21 @@
         <!-- 中间区域 -->
         <div id="top" style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box; padding: 10px 0;">
             <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceA">0</span>个a</h1>
-            <!-- 调试e值显示区 -->
+            <!-- 资源显示区 -->
             <div style="text-align:center;color:#888; margin: 3px 0;">调试e值：<span id="debugEValue"></span></div>         
             <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceB">0</span>个b</h1>
             <h1 style="text-align: center; margin: 5px 0;">你有<span id="resourceC">0</span>个c</h1>
             <!-- 调试f值显示区 -->
             <div style="text-align:center;color:#888; ">调试f值：<span id="debugFValue"></span></div>
-            <!-- GameCore测试计数器显示区 -->
-            <div style="text-align:center;color:#888;">A资源收入：<span id="debugTestValue">0 a/s</span></div>
+            <!-- 收入显示区 -->
+            <div style="text-align:center;color:#888;">a资源收入：<span id="debugTestValue">0 a/s</span></div>
             <!-- BuySystem测试计数器显示区 -->
             <div style="text-align:center;color:#888;">Buy测试值：<span id="debugHValue">0</span></div>
         </div>
 
         <!-- 右边区域 -->
         <div style="display: inline-block; width: 33%; vertical-align: top; height: 100%; box-sizing: border-box; padding: 10px 0;">
-            <div style="margin-bottom: 8px;">Reset Debug: <pre id="resetDebugValue" style="margin: 0; font-size: 12px; max-height: 80px; overflow-y: auto;">待初始化...</pre></div>
+            <div style="margin-bottom: 8px;">Reset Debug: <pre id="resetDebugValue" style="margin: 0; font-size: 12px; max-height: 80px; overflow-y: auto;"></pre></div>
             <div style="margin-bottom: 8px; text-align: center; color: #888; font-size: 12px;">
                 <div>总游玩时间: <span id="totalPlayTime">0.0s</span></div>
                 <div>重置1中时间: <span id="reset1PlayTime">0.0s</span></div>
@@ -540,6 +541,7 @@
         import BuySystem from './buy.js';
         import pageSwitch from './pageSwitch.js';
         import AchievementSystem from './chenjiu.js';
+        import hideSystem from './hideSystem.js';
             
         // 初始化逻辑（只调用一次）
         async function initAllSystems() {
@@ -557,7 +559,7 @@
                 await BuySystem.init();
                 await pageSwitch.init();  // 确保页面切换系统正确初始化
                 await AchievementSystem.init();  // 初始化成就系统
-                
+                hideSystem.hideTestElements();  // 隐藏测试元素
                 // 启动f值更新器
                 let fValue = 0;
                 setInterval(function() {

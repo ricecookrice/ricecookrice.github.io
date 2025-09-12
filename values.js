@@ -110,7 +110,7 @@ const gameValues = {
      * resources对象存储游戏中的基本资源数量和相关乘数
      */
     resources: {
-        a: 50000000,  // 初始资源A数量
+        a: 1,  // 初始资源A数量
             a_multipliers: {
                 multiplier1: 1,
                 multiplier2: 1,
@@ -135,7 +135,7 @@ const gameValues = {
             triggers: [
                 {
                     incomeX: 0.1,     // 收益倍数：影响基础收入
-                    buycount: 2,       // 购买次数：记录已购买数量，即是计数也是计算基础
+                    buycount: 0,       // 购买次数：记录已购买数量，即是计数也是计算基础
                     base_cost: 1,      // 基础价格：初始购买成本
                     costX: 1.5,          // 价格倍数：每次购买后价格增长系数
                     benefit: 0.1,        // 加成系数：对下层触发器的加成效果
@@ -143,7 +143,7 @@ const gameValues = {
                 },
                 {
                     incomeX: 0.2,     // 第二个触发器收益倍数略高
-                    buycount: 1,
+                    buycount: 0,
                     base_cost: 5,
                     costX: 3,
                     benefit: 0.2         // 第二个触发器的加成系数
